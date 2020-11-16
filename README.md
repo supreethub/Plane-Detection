@@ -1,6 +1,6 @@
-## AR_Plane_Tracking
+# AR_Plane_Tracking
 
-# How to run plane_ar.py
+## How to run plane_ar.py
 
 Linux: python plane_ar.py *source video*
 
