@@ -1,12 +1,13 @@
-# AR_Plane_Detection
+# AR_Plane_Tracking
 
-## How to run
+## How to run plane_ar.py
 
-1. Install http-server using npm
-    - npm install http-server
-  
-2. Navigate to the project directory (/demos in this case) and run 
-    - http-server
-  
-  It shall display a list of IPs the site is being served on. Copy and paste in the browser
+Linux: python plane_ar.py *source video*
 
+Windows: Open git bash and type the same command as linux
+
+## How to run plane_tracker.py
+
+Linux: python plane_tracker.py *source video*
+
+Windows: Open git bash and type the same command as linux
