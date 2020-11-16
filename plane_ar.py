@@ -8,8 +8,6 @@ This sample shows an example of augmented reality overlay over a planar object
 tracked by PlaneTracker from plane_tracker.py. solvePnP function is used to
 estimate the tracked object location in 3d space.
 
-video: http://www.youtube.com/watch?v=pzVbhxx6aog
-
 Usage
 -----
 plane_ar.py [<video source>]
@@ -48,8 +46,9 @@ class App:
         self.paused = False
         self.tracker = PlaneTracker()
 
-        cv.namedWindow('plane')
+        cv.namedWindow('plane', cv.WINDOW_NORMAL)
         cv.createTrackbar('focal', 'plane', 25, 50, common.nothing)
+        cv.resizeWindow('plane', 1080, 1920)
         self.rect_sel = common.RectSelector('plane', self.on_rect)
 
     def on_rect(self, rect):
