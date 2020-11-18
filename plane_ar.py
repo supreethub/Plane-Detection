@@ -48,7 +48,7 @@ class App:
 
         cv.namedWindow('plane', cv.WINDOW_NORMAL)
         cv.createTrackbar('focal', 'plane', 25, 50, common.nothing)
-        cv.resizeWindow('plane', 1080, 1920)
+        cv.resizeWindow('plane', 1920, 1080)
         self.rect_sel = common.RectSelector('plane', self.on_rect)
 
     def on_rect(self, rect):
