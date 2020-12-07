@@ -28,8 +28,9 @@ from __future__ import print_function
 import numpy as np
 import cv2 as cv
 import video
+import os
 import common
-from plane_tracker import PlaneTracker
+from sup_tracker import PlaneTracker
 from video import presets
 
 # Simple model of a house - cube with a triangular prism "roof"
@@ -43,9 +44,10 @@ ar_edges = [(0, 1), (1, 2), (2, 3), (3, 0),
 
 class App:
     def __init__(self, src):
-        self.cap = video.create_capture(src, presets['book'])
+        self.cap = cv.VideoCapture(src)
         self.frame = None
         self.paused = False
+
         self.tracker = PlaneTracker()
 
         cv.namedWindow('plane')
@@ -56,17 +58,23 @@ class App:
         self.tracker.add_target(self.frame, rect)
 
     def run(self):
+        pos_frame = self.cap.get(1)
         while True:
             playing = not self.paused and not self.rect_sel.dragging
             if playing or self.frame is None:
-                ret, frame = self.cap.read()
+                ret, frame = self.cap.read() #get current frame
+                ret, next_frame = self.cap.read() #Get next frame
+                if np.array_equal(frame, next_frame):
+                    print("##################equal#######################")
+                    os._exit(0)
+                self.cap.set(1, pos_frame-1) #reset to previous frame
                 if not ret:
                     break
                 self.frame = frame.copy()
 
             vis = self.frame.copy()
             if playing:
-                tracked = self.tracker.track(self.frame)
+                tracked = self.tracker.track(self.frame, next_frame)
                 for tr in tracked:
                     cv.polylines(vis, [np.int32(tr.quad)], True, (255, 255, 255), 2)
                     for (x, y) in np.int32(tr.p1):
@@ -109,3 +117,48 @@ if __name__ == '__main__':
     except:
         video_src = 0
     App(video_src).run()
+
+
+"""class App:
+    def __init__(self, src):
+        self.cap = video.create_capture(src, presets['book'])
+        self.frame = None
+        self.paused = False
+
+        self.tracker = PlaneTracker()
+
+        cv.namedWindow('plane')
+        cv.createTrackbar('focal', 'plane', 25, 50, common.nothing)
+        self.rect_sel = common.RectSelector('plane', self.on_rect)
+
+    def on_rect(self, rect):
+        self.tracker.add_target(self.frame, rect)
+
+    def run(self):
+        while True:
+            playing = not self.paused and not self.rect_sel.dragging
+            if playing or self.frame is None:
+                ret, frame = self.cap.read()
+                print(frame.shape)
+                if not ret:
+                    break
+                self.frame = frame.copy()
+
+            vis = self.frame.copy()
+            if playing:
+                tracked = self.tracker.track(self.frame)
+                for tr in tracked:
+                    cv.polylines(vis, [np.int32(tr.quad)], True, (255, 255, 255), 2)
+                    for (x, y) in np.int32(tr.p1):
+                        cv.circle(vis, (x, y), 2, (255, 255, 255))
+                    self.draw_overlay(vis, tr)
+
+            self.rect_sel.draw(vis)
+            cv.imshow('plane', vis)
+            ch = cv.waitKey(1)
+            if ch == ord(' '):
+                self.paused = not self.paused
+            if ch == ord('c'):
+                self.tracker.clear()
+            if ch == 27:
+                break"""
