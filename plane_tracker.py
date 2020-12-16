@@ -84,14 +84,26 @@ TrackedTarget = namedtuple('TrackedTarget', 'target, p0, p1, H, quad')
 
 class PlaneTracker:
     def __init__(self):
-        self.detector = cv.ORB_create( nfeatures = 2000 )
+        self.detector = cv.ORB_create(  nfeatures = 10000,
+                                        scaleFactor=1.5,
+                                        nlevels=10,
+                                        edgeThreshold=100,
+                                        firstLevel=0,
+                                        WTA_K=4,
+                                        scoreType = cv.ORB_FAST_SCORE,
+                                        patchSize=31,
+                                        fastThreshold=30)
         self.matcher = cv.FlannBasedMatcher(flann_params, {})  # bug : need to pass empty dict
+        self.bf = cv.BFMatcher(cv.NORM_HAMMING)
         self.targets = []
         self.frame_points = []
 
     def add_target(self, image, rect, data=None):
         '''Add a new tracking target.'''
         x0, y0, x1, y1 = rect
+        """clahe = cv.createCLAHE(clipLimit=1.0, tileGridSize=((4, 4)))
+        image = cv.cvtColor(image, cv.COLOR_RGB2GRAY)
+        image = clahe.apply(image)"""
         raw_points, raw_descrs = self.detect_features(image)
         points, descs = [], []
         for kp, desc in zip(raw_points, raw_descrs):
@@ -114,8 +126,8 @@ class PlaneTracker:
         self.frame_points, frame_descrs = self.detect_features(frame)
         if len(self.frame_points) < MIN_MATCH_COUNT:
             return []
-        matches = self.matcher.knnMatch(frame_descrs, k = 4)
-        matches = [m[0] for m in matches if len(m) > 1 and m[0].distance < m[1].distance * 0.58]
+        matches = self.matcher.knnMatch(frame_descrs, k = 2)
+        matches = [m[0] for m in matches if len(m) > 1 and m[0].distance < m[1].distance * 0.70]
         if len(matches) < MIN_MATCH_COUNT:
             return []
         matches_by_id = [[] for _ in xrange(len(self.targets))]
@@ -129,7 +141,7 @@ class PlaneTracker:
             p0 = [target.keypoints[m.trainIdx].pt for m in matches]
             p1 = [self.frame_points[m.queryIdx].pt for m in matches]
             p0, p1 = np.float32((p0, p1))
-            H, status = cv.findHomography(p0, p1, cv.RANSAC, 3.0)
+            H, status = cv.findHomography(p0, p1, cv.RANSAC, 1.0)
             status = status.ravel() != 0
             if status.sum() < MIN_MATCH_COUNT:
                 continue
@@ -146,6 +158,9 @@ class PlaneTracker:
 
     def detect_features(self, frame):
         '''detect_features(self, frame) -> keypoints, descrs'''
+        clahe = cv.createCLAHE(clipLimit=50.0, tileGridSize=((20, 20)))
+        frame = cv.cvtColor(frame, cv.COLOR_RGB2GRAY)
+        frame = clahe.apply(frame)
         keypoints, descrs = self.detector.detectAndCompute(frame, None)
         if descrs is None:  # detectAndCompute returns descs=None if not keypoints found
             descrs = []
